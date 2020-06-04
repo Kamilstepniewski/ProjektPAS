@@ -25,11 +25,11 @@ context.load_cert_chain(certfile= r'C:\Users\admin\Downloads\client.crt', keyfil
 
 #Będziemy wysyłać poszczególne cyfry poprzez ten sposób będziemy wiedzieć które pole skreślił klient
 
+#Funkcja która będzie zmieniać stan buttona tak aby wyświetlić ruch otrzymany od serwera
+#def change_state_button_from_server(button1,button2,button3,button4,button5,button6,button7,button8,button9,number):
+#    pass
 
-
-
-
-def button_click(button,number,aktualny_stan_planszy):
+def button_click(button,number,aktualny_stan_planszy,list_of_button):
     global bclick
     if button["text"] == " ":
         button["text"] = 'X'
@@ -49,6 +49,7 @@ def button_click(button,number,aktualny_stan_planszy):
         #ok2 - przyjął ruch ale gra jeszcze nie jest zakonczona
         #ok0
         #ok1 gra wygrana lub przerwana
+        msg =''
         while data:
             data = client.recv(1)
             print("I receive:" + data.decode() )
@@ -59,15 +60,18 @@ def button_click(button,number,aktualny_stan_planszy):
             elif(msg == 'ok0'):
                 print("Przegrana")
                 break
-            elif(msg=='ok2')
+            elif(msg=='ok2'):
                 #Gra toczy się dalej
                 #odczytaj ruch
-                #Tutaj najlepiej jakby serwer wysłał objekt button oraz numer(numer potrzebny do zaktualizowania planszy)wtedy:
-                button_server = msg
-                button_server['text'] ='O'
-                button["state"] = 'normal'
-                button["state"] = 'disabled'
-                aktualny_stan_planszy[number] = "O"
+                #Tutaj najlepiej jakby serwer wysłał numer(numer potrzebny do zaktualizowania planszy)wtedy:
+                #Jeśli wysłał ok2 to powinien wysłać numer ruchu
+
+
+                number_button_from_server = msg
+                list_of_button[number_button_from_server]['text'] = 'O'
+                list_of_button[number_button_from_server]["state"] = 'normal'
+                list_of_button[number_button_from_server]["state"] = 'disabled'
+                aktualny_stan_planszy[number_button_from_server] = "O"
 
                 break
 
@@ -108,39 +112,39 @@ def New_game():
         player1_name.grid(row=1, column=1, columnspan=2)
 
         button7 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button7,7,aktualny_stan_planszy))
+                            command=lambda: button_click(button7,7,aktualny_stan_planszy,list_of_button))
         button7.grid(row=2, column=1)
 
         button8 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button8,8,aktualny_stan_planszy))
+                            command=lambda: button_click(button8,8,aktualny_stan_planszy,list_of_button))
         button8.grid(row=2, column=2)
 
         button9 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button9,9,aktualny_stan_planszy))
+                            command=lambda: button_click(button9,9,aktualny_stan_planszy,list_of_button))
         button9.grid(row=2, column=3)
 
         button4 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button4,4,aktualny_stan_planszy))
+                            command=lambda: button_click(button4,4,aktualny_stan_planszy,list_of_button))
         button4.grid(row=3, column=1)
 
         button5 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button5,5,aktualny_stan_planszy))
+                            command=lambda: button_click(button5,5,aktualny_stan_planszy,list_of_button))
         button5.grid(row=3, column=2)
 
         button6 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button6,6,aktualny_stan_planszy))
+                            command=lambda: button_click(button6,6,aktualny_stan_planszy,list_of_button))
         button6.grid(row=3, column=3)
 
         button1 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button1,1,aktualny_stan_planszy))
+                            command=lambda: button_click(button1,1,aktualny_stan_planszy,list_of_button))
         button1.grid(row=4, column=1)
 
         button2 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button2,2,aktualny_stan_planszy))
+                            command=lambda: button_click(button2,2,aktualny_stan_planszy,list_of_button))
         button2.grid(row=4, column=2)
 
         button3 = tk.Button(window, text=" ", font='Times 20 bold', bg='white', fg='white', height=4, width=8,
-                            command=lambda: button_click(button3,3,aktualny_stan_planszy))
+                            command=lambda: button_click(button3,3,aktualny_stan_planszy,list_of_button))
         button3.grid(row=4, column=3)
 
         # button_new_game = tk.Button(window, text="New game ", font='Times 20 bold', bg='white', height=4, width=8)
@@ -151,6 +155,8 @@ def New_game():
         # img_1 = tk.PhotoImage(file="C:/Users/admin/Desktop/TICtacTOE/unnamed_2.png")
         # button_new_game.config(image=img_1)
         button_new_game.grid(row=2, column=0)
+
+        list_of_button = [button_new_game,button1,button2,button3,button4,button5,button6,button7,button8,button9]
 
 
 import socket
