@@ -1,21 +1,22 @@
 import ssl
 import requests
 import tkinter as tk
+import  uuid
 
 root = tk.Tk()
 root.title("Tic Tac Toe")
 
-
+aktualny_stan_planszy = [" ", " ", " ", " ", " ", " ", " ", " ", " "]
 root.geometry("600x600")
 
 root['background'] = '#00ace6'
 
 bclick = False
 
-# requests.get("http://127.0.0.1", verify=r'C:\Users\patryk.krawczak\Downloads\server.crt')
+# requests.get("http://127.0.0.1", verify=r'C:\Users\admin\Downloads\server.crt')
 context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH,cafile = r'C:\Users\admin\Downloads\server.crt')
 context.load_cert_chain(certfile= r'C:\Users\admin\Downloads\client.crt', keyfile= r'C:\Users\admin\Downloads\client.key')
-# context.load_verify_locations(cafile=r'C:\Users\patryk.krawczak\Downloads\client.crt')
+# context.load_verify_locations(cafile=r'C:\Users\admin\Downloads\client.crt')
 
 #Tablica
 
@@ -23,11 +24,47 @@ context.load_cert_chain(certfile= r'C:\Users\admin\Downloads\client.crt', keyfil
 #|4|5|6|
 #|1|2|3|
 
+# Struktura wiadomości
+#'To:\r\n
+#From:\r\n
+#Information_about_client_sesion_id:\r\n
+#Message_id:\r\n
+#Content-length:\r\n
+#Message:\r\n\r\n
+
+def read_message(message):
+    # Tutaj można odbierać wiadomość dopóki b'\r\n\r\n' not in data
+    #data = b''
+    #while b'\r\n\r\n' not in data:
+    #    data += client.recv(1)
+    To = message[message[0:].find("To:")+3:message.find('\r\nFrom:')]
+    From = message[message[0:].find("From:")+5:message.find('\r\nInformation_about_client_sesion_id:')]
+    Information_about_client_sesion_id = message[message[0:].find("Information_about_client_sesion_id:") + 35:message.find('\r\nMessage_id:')]
+    Message_id = message[message[0:].find("Message_id:") + 11:message.find('\r\nContent-length:')]
+    Content_length = int(message[message[0:].find("Content-length:") + 15:message.find('\r\nMessage:')])
+    #len = 8+Content_length
+    Message = message[message[0:].find("Message:") + 8:message.find('\r\n\r\n')]
+
+    print(To,From,Information_about_client_sesion_id,Message_id,Content_length,Message)
+
+
+#Funkcja nasłuchująca wiadomość od serwera
+def nasłuchuj_serwer():
+    data =''
+    while data:
+        data += client.recv(1)
+    return data
+
 #Będziemy wysyłać poszczególne cyfry poprzez ten sposób będziemy wiedzieć które pole skreślił klient
 
 #Funkcja która będzie zmieniać stan buttona tak aby wyświetlić ruch otrzymany od serwera
 #def change_state_button_from_server(button1,button2,button3,button4,button5,button6,button7,button8,button9,number):
 #    pass
+gra_rozpoczeta = False
+def set_plansza(plansza):
+    global aktualny_stan_planszy
+    for znak in range(9):
+        aktualny_stan_planszy[znak] = plansza[znak]
 
 def button_click(button,number,aktualny_stan_planszy,list_of_button):
     global bclick
@@ -36,46 +73,100 @@ def button_click(button,number,aktualny_stan_planszy,list_of_button):
         bclick = True
         button["state"] = 'normal'
         button["state"] = 'disabled'
-        aktualny_stan_planszy[number] = "X"
+        aktualny_stan_planszy[number-1] = "X"
         print(aktualny_stan_planszy)
 
-        #Serwer czeka na ruch więc muszę mu wysłać aktualny stan planszy i ruch
-        ruch = number
-        msg_stan_planszy_ruch= aktualny_stan_planszy+"\n\n"+ruch
-        client.sendall(msg_stan_planszy_ruch.encode())
+        #Serwer czeka na ruch więc muszę mu wysłać aktualny stan planszy i ruch <- wystarczy że wyślesz numer ruch
+        ruch = str(number)
+#         msg_stan_planszy_ruch= "".join(aktualny_stan_planszy)+"\n\n"+ruch
+        client.sendall(ruch.encode())
 
         #Jeżeli ruch prawidłowy to sprawdź co mówi serwer
         #Czy koniec gry i jaki wynik - ok
         #ok2 - przyjął ruch ale gra jeszcze nie jest zakonczona
         #ok0
         #ok1 gra wygrana lub przerwana
-        msg =''
-        while data:
-            data = client.recv(1)
-            print("I receive:" + data.decode() )
-            msg += data
-            if(msg == 'ok1'):
-                print("Wygrana")
-                break
-            elif(msg == 'ok0'):
-                print("Przegrana")
-                break
-            elif(msg=='ok2'):
-                #Gra toczy się dalej
-                #odczytaj ruch
-                #Tutaj najlepiej jakby serwer wysłał numer(numer potrzebny do zaktualizowania planszy)wtedy:
-                #Jeśli wysłał ok2 to powinien wysłać numer ruchu
+        global gra_rozpoczeta
+        if not gra_rozpoczeta:
+            msg =b''
+            while True:
+                data = client.recv(1)
+                print("I receive:" + data.decode() )
+                msg += data
+                if msg == b'i am ready':
+                    break
+            msg =b''
+            client.sendall(b"START")
+            while True:
+                data = client.recv(1)
+                print("I receive:" + data.decode() )
+                msg += data
+                if msg == b'ok':
+                    
+                    gra_rozpoczeta = True
+                    break
+                
+        if gra_rozpoczeta:
+            msg =b''
+            while True:
+                data = client.recv(1)
+                print("I receive:" + data.decode() )
+                msg += data
+                if msg == b'musisz poczekac':
+                    msg = b""
+                    print("czekam")
+                    client.sendall(b"ok")
+                    msg =b''
+                    pass
+                
+                if msg[:10] == b"podaj ruch" and len(msg) == 19:
+                    plansza = msg[10:]
+                    plansza = plansza.decode()
+                    for i in range(9):
+                        if plansza[i]!= " ":
+                            list_of_button[i+1]["text"] = plansza[i]
+                            list_of_button[i+1]["state"] = 'normal'
+                            list_of_button[i+1]["state"] = 'disabled'
+                            aktualny_stan_planszy[i] = plansza[i]
+                        client.sendall(ruch.encode())
+                    print("wykonałem ruch")
+                    break
+            msg =b''
+            while True:
+                data = client.recv(1)
+                print("I receive:" + data.decode() )
+                
+                msg += data
+                print(msg)
+                if(msg == b'nieprawidlowy ruch'):
+                    button["text"] = ' '
+                    bclick = False
+                    button["state"] = 'normal'
+                    aktualny_stan_planszy[number-1] = " "
+                    return
+                if(msg == b'ok1'):
+                    print("Wygrana")
+                    return
+                elif(msg == b'ok0'):
+                    print("Przegrana")
+                    return
+                elif(msg==b'ok2'):
+                    #Gra toczy się dalej
+                    #odczytaj ruch
+                    #Tutaj najlepiej jakby serwer wysłał numer(numer potrzebny do zaktualizowania planszy)wtedy:
+                    #Jeśli wysłał ok2 to powinien wysłać numer ruchu
 
+                    msg = client.recv(1)
+                    msg = int(msg.decode())
+                    number_button_from_server = msg
+                    list_of_button[number_button_from_server]['text'] = 'O'
+                    list_of_button[number_button_from_server]["state"] = 'normal'
+                    list_of_button[number_button_from_server]["state"] = 'disabled'
+                    aktualny_stan_planszy[number_button_from_server - 1] = "O"
 
-                number_button_from_server = msg
-                list_of_button[number_button_from_server]['text'] = 'O'
-                list_of_button[number_button_from_server]["state"] = 'normal'
-                list_of_button[number_button_from_server]["state"] = 'disabled'
-                aktualny_stan_planszy[number_button_from_server] = "O"
+                    break
 
-                break
-
-
+                    break
 
 
 
@@ -83,9 +174,10 @@ def button_click(button,number,aktualny_stan_planszy,list_of_button):
 
 
 def New_game():
-
+    global aktualny_stan_planszy
+    
     aktualny_stan_planszy = [" ", " ", " ", " ", " ", " ", " ", " ", " "]
-
+    Session_id = uuid.uuid4()
     msg_start = "START"
 
     #client.sendall(msg_start.encode())
@@ -99,7 +191,7 @@ def New_game():
     if od_serwera == 'ok':
         #client.sendall("Startuje")
 
-        print("Move to windowe where")
+        print("Move to window where")
         window = tk.Toplevel(root)
         window.geometry("600x600")
         window['background'] = '#00ace6'
@@ -173,19 +265,10 @@ with socket.create_connection((SERVER,PORT)) as sock:
         b = tk.Button(root, text="New game", command=New_game)
         b.config(width=300, height=100)
 
-        img = tk.PhotoImage(file="C:/Users/admin/Desktop/TICtacTOE/unnamed.png")
-        b.config(image=img)
+#         img = tk.PhotoImage(file="C:/Users/admin/Desktop/TICtacTOE/unnamed.png")
+#         b.config(image=img)
         b.pack(expand=1)
         #root.update()
         root.mainloop()
-        while True:
 
-
-
-            in_data =  client.recv(4024)
-            print("From Server :" ,in_data.decode())
-            out_data = str(input())
-            client.sendall(out_data.encode())
-            if out_data=='bye':
-                break
         client.close()
