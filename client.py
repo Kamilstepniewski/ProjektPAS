@@ -13,8 +13,8 @@ root.geometry("600x600")
 root['background'] = '#00ace6'
 
 # requests.get("http://127.0.0.1", verify=r'C:\Users\admin\Downloads\server.crt')
-context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=r'C:\Users\admin\Downloads\server.crt')
-context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\client.crt', keyfile=r'C:\Users\admin\Downloads\client.key')
+context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt')
+context.load_cert_chain(certfile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt', keyfile=r'C:\Users\patryk.krawczak\Downloads\private.key')
 
 
 # context.load_verify_locations(cafile=r'C:\Users\admin\Downloads\client.crt')
@@ -34,7 +34,7 @@ context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\client.crt', keyfile
 # Message:\r\n\r\n
 
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\n\Content_length\r\n{Content_length}\r\nMessage{Message}"
+    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:38}\r\nMessage_id:{Message_id:03}\r\n\Content_length:{Content_length:03}\r\nMessage:{Message}"
 
 
 def read_message(message):
@@ -56,10 +56,13 @@ def read_message(message):
 
 
 # Funkcja nasłuchująca wiadomość od serwera
-def nasluchuj_serwer():
+def nasluchuj_serwer(client):
     data = b""
+    r = True
     while data:
-        data += client.recv(1)
+        r = client.recv(1)
+        print(r)
+        data += r
     return data
 
 
@@ -215,16 +218,20 @@ with socket.create_connection((SERVER, PORT)) as sock:
                 msg_start = f'To:Server\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
                 client.sendall(msg_start.encode())
                 print(msg_start)
-                resp = nasluchuj_serwer()
+                resp = None
+                resp = client.recv(1000)
                 resp = resp.decode()
                 print("test -1 ")
+                print(resp)
                 if resp != "code:400 login failed":
-                    if resp[3:6] == str(login):
+                    print(resp[3:6])
+                    if resp[4:7] == str(login):
                         session_id = resp[25:-4]
                         msg = opakuj("SERWER", login, session_id, 100, len("i am ready"), "i am ready")
                         client.sendall(msg.encode())
+                        print("tutaj")
                         while True:
-                            resp = nasluchuj_serwer()
+                            resp = client.recv(1000)
                             resp = resp.decode()
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                 if resp[3:6] == str(login) and session_id == resp[25:-4]: # nie wiem czy chcemy sprawdzać swoje session_id
@@ -233,7 +240,7 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                     msg_ruch = opakuj("SERWER",login,session_id,100,len(command),command)
                                     client.sendall(msg_ruch.encode())
                                     #Czekaj na odpowiedz serwera o ruchu
-                                    resp = nasluchuj_serwer()
+                                    resp = client.recv(1000)
                                     resp = resp.decode()
                                     if resp[3:6] == str(login) and session_id == resp[25:-4]:
                                         if resp[-12:-4] == "BAD MOVE":
