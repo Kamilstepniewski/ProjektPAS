@@ -32,9 +32,8 @@ context.load_cert_chain(certfile=r'C:\Users\patryk.krawczak\Downloads\selfsigned
 # Message_id:\r\n
 # Content-length:\r\n
 # Message:\r\n\r\n
-
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:38}\r\nMessage_id:{Message_id:03}\r\n\Content_length:{Content_length:03}\r\nMessage:{Message}"
+    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:38}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}"
 
 
 def read_message(message):
@@ -215,7 +214,7 @@ with socket.create_connection((SERVER, PORT)) as sock:
             command = str(input("podaj komendę"))
             if command == "start":
                 login = np.random.randint(100, 999)
-                msg_start = f'To:Server\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
+                msg_start = f'To:SER\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
                 client.sendall(msg_start.encode())
                 print(msg_start)
                 resp = None
@@ -227,11 +226,12 @@ with socket.create_connection((SERVER, PORT)) as sock:
                     print(resp[3:6])
                     if resp[4:7] == str(login):
                         session_id = resp[25:-4]
-                        msg = opakuj("SERWER", login, session_id, 100, len("i am ready"), "i am ready")
+                        msg = opakuj("SER", login, session_id, 100, len("i am ready"), "i am ready")
                         client.sendall(msg.encode())
                         print("tutaj")
                         while True:
                             resp = client.recv(1000)
+                            print(resp)
                             resp = resp.decode()
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                 if resp[3:6] == str(login) and session_id == resp[25:-4]: # nie wiem czy chcemy sprawdzać swoje session_id
