@@ -8,8 +8,21 @@ import time
 
 
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
+    
     return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\nContent_length\r\n{Content_length}\r\nMessage{Message}"
 
+
+def odpakuj(msg):
+    for i in msg:
+        print([i])
+    to = msg[3:6]
+    From = msg[13:16]
+    Info_id = msg[53:91]
+    Message_id = msg[104:107]
+    Content_length = msg[124:127]
+    Content_length = int(Content_length)
+    message = msg[137:137+Content_length]
+    return to,From,Info_id,Message_id,Content_length,message
 
 def read_message(message):
     # Tutaj można odbierać wiadomość dopóki b'\r\n\r\n' not in data
@@ -178,14 +191,14 @@ class ClientThread(threading.Thread):
             resp = self.csocket.recv(2000)
             resp = resp.decode()
             print(resp)
-            if resp[:16] == 'To:Server\r\nLogin':
-                login = resp[16:20]
+            if resp[:len('To:SER\r\nLogin')] == 'To:SER\r\nLogin':
+                login = resp[13:17]
                 global dictionary_data_users
                 dictionary_data_users[login] = {
                     "session_id": self.session_id,
                     "numer_gracza": self.numer_gracza
                 }
-                message = resp[48:-4]
+                message = resp[45:-4]
 
                 if message == "START":
                     mess = f'To:{login}\r\nsession_number:{self.session_id}\r\n\r\n'
@@ -195,12 +208,18 @@ class ClientThread(threading.Thread):
                     resp = resp.decode()
                     
                     if resp[-19:-4] != "BAD CREDENTIALS":
-                        msg = read_message(resp)
-                        To, From, Information_about_client_sesion_id, Message_id, Content_length, Message = msg
-                        if To == "SERWER" and From == str(login) and Information_about_client_sesion_id == str(
+                        msg = odpakuj(resp)
+                        To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
+                        print(To)
+                        print(msg)
+                        print(From)
+                        if  "SER" in To and  str(login) in From and Information_about_client_sesion_id == str(
                                 self.session_id):
                             msg = Message
-                            if msg == "i am ready":
+                            print(msg)
+                            print(msg[:len("i am ready")] in "i am ready")
+                            if msg in "i am ready":
+                                
                                 while True:
                                     if aktualny_gracz != self.numer_gracza:
                                         print(aktualny_gracz)
