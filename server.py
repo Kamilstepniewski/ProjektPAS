@@ -8,7 +8,6 @@ import time
 
 
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    
     return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\nContent_length\r\n{Content_length}\r\nMessage{Message}"
 
 
@@ -17,12 +16,14 @@ def odpakuj(msg):
         print([i])
     to = msg[3:6]
     From = msg[13:16]
-    Info_id = msg[53:91]
-    Message_id = msg[104:107]
-    Content_length = msg[124:127]
+    Info_id = msg[53:92]
+    print("Odpakuj: ", Info_id)
+    Message_id = msg[105:108]
+    Content_length = msg[125:128]
     Content_length = int(Content_length)
-    message = msg[137:137+Content_length]
-    return to,From,Info_id,Message_id,Content_length,message
+    message = msg[138:138 + Content_length]
+    return to, From, Info_id, Message_id, Content_length, message
+
 
 def read_message(message):
     # Tutaj można odbierać wiadomość dopóki b'\r\n\r\n' not in data
@@ -31,16 +32,17 @@ def read_message(message):
     #    data += client.recv(1)
     print(message)
     To = message[3:9]
-    From = message[16:16+3]
-    Information_about_client_sesion_id = message[56:56+38]
-    
-#     print(message.find("Content_length:") + len("Content-length:"))
-    Content_length = int(message[92 + len("Content_length:"):93+2+ len("Content_length:")])
-    Message_id = message[106:106+3]
+    From = message[16:16 + 3]
+    Information_about_client_sesion_id = message[56:56 + 38]
+
+    #     print(message.find("Content_length:") + len("Content-length:"))
+    Content_length = int(message[92 + len("Content_length:"):93 + 2 + len("Content_length:")])
+    Message_id = message[106:106 + 3]
     # len = 8+Content_length
-    Message = message[140:140+Content_length]
+    Message = message[140:140 + Content_length]
     print("-------")
-    print(f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\nContent_length:{Content_length}\r\nMessage:{Message}")
+    print(
+        f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\nContent_length:{Content_length}\r\nMessage:{Message}")
     return To, From, Information_about_client_sesion_id, Message_id, Content_length, Message
 
 
@@ -156,7 +158,6 @@ def nasluchuj(client):
     return data
 
 
-
 wykonaj_ruch(2, 1, 1)
 
 
@@ -165,9 +166,9 @@ wykonaj_ruch(2, 1, 1)
 def create_context():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
-    context.load_cert_chain(certfile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt',
-                            keyfile=r'C:\Users\patryk.krawczak\Downloads\private.key')
-    context.load_verify_locations(cafile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt')
+    context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\selfsigned.crt',
+                            keyfile=r'C:\Users\admin\Downloads\private.key')
+    context.load_verify_locations(cafile=r'C:\Users\admin\Downloads\selfsigned.crt')
 
     return context
 
@@ -203,56 +204,62 @@ class ClientThread(threading.Thread):
                 if message == "START":
                     mess = f'To:{login}\r\nsession_number:{self.session_id}\r\n\r\n'
                     self.csocket.sendall(mess.encode())
-#                     resp = nasluchuj(self.csocket)
+                    #                     resp = nasluchuj(self.csocket)
                     resp = self.csocket.recv(2000)
                     resp = resp.decode()
-                    
+
                     if resp[-19:-4] != "BAD CREDENTIALS":
                         msg = odpakuj(resp)
                         To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                         print(To)
                         print(msg)
                         print(From)
-                        if  "SER" in To and  str(login) in From and Information_about_client_sesion_id == str(
-                                self.session_id):
+                        print(Information_about_client_sesion_id)
+                        print(self.session_id)
+                        if "SER" in To and str(login) in From and Information_about_client_sesion_id == str(self.session_id):
                             msg = Message
                             print(msg)
                             print(msg[:len("i am ready")] in "i am ready")
                             if msg in "i am ready":
-                                
+
                                 while True:
                                     if aktualny_gracz != self.numer_gracza:
                                         print(aktualny_gracz)
                                     else:
                                         print("jestem tutaj 1")
-                                        #Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
+                                        # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
                                         if czy_koniec() == 0:
-                                            msg = opakuj(login,"SERWER",self.session_id,200,len("YOU WIN PLAYER 0" ),"YOU WIN PLAYER 0")
+                                            msg = opakuj(login, "SERWER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                                         "YOU WIN PLAYER 0")
                                             self.csocket.sendall(msg.encode())
                                         elif czy_koniec() == 2:
                                             zmien_gracza()
-                                            msg = opakuj(login, "SERWER", self.session_id, 200, len("YOU WIN PLAYER 0"),"YOU WIN PLAYER 0")
+                                            msg = opakuj(login, "SERWER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                                         "YOU WIN PLAYER 0")
                                             self.csocket.sendall(msg.encode())
-                                        #Jeśli gra się nie skończyła
+                                        # Jeśli gra się nie skończyła
                                         else:
-                                            #Wyślij wiadomość do gracza  aby podał ruch wraz z aktualnym stanem planszy
-                                            msg_podaj_ruch = opakuj(login, "SERWER", self.session_id, 200, len("PODAJ RUCH"),"PODAJ RUCH")
+                                            # Wyślij wiadomość do gracza  aby podał ruch wraz z aktualnym stanem planszy
+                                            msg_podaj_ruch = opakuj(login, "SERWER", self.session_id, 200,
+                                                                    len("PODAJ RUCH"), "PODAJ RUCH")
                                             self.csocket.sendall(msg_podaj_ruch.encode())
-                                            #Czeka na ruch klienta
-#                                             resp = nasluchuj(self.csocket)
+                                            # Czeka na ruch klienta
+                                            #                                             resp = nasluchuj(self.csocket)
                                             resp = self.csocket.recv(2000)
                                             resp = resp.decode()
                                             ruch = int(resp[-5:-4])
-                                            if ruch >=1 and ruch <=9:
-                                                x,y = tlumacz_na_x_y(ruch)
-                                                czy_udalo_sie = wykonaj_ruch(x,y,self.csocket)
+                                            if ruch >= 1 and ruch <= 9:
+                                                x, y = tlumacz_na_x_y(ruch)
+                                                czy_udalo_sie = wykonaj_ruch(x, y, self.csocket)
                                                 if czy_udalo_sie == "pole zajete":
-                                                    msg_zly_ruch = opakuj(login,"SERWER",self.session_id,400,len("BAD MOVE"),"BAD MOVE")
+                                                    msg_zly_ruch = opakuj(login, "SERWER", self.session_id, 400,
+                                                                          len("BAD MOVE"), "BAD MOVE")
                                                     self.csocket.sendall(msg_zly_ruch.encode())
                                                 elif czy_udalo_sie == "udalo sie":
-                                                    msg_dobry_ruch = opakuj(login, "SERWER", self.session_id, 400,len("RIGHT MOVE"), "RIGHT MOVE")
+                                                    msg_dobry_ruch = opakuj(login, "SERWER", self.session_id, 400,
+                                                                            len("RIGHT MOVE"), "RIGHT MOVE")
                                                     self.csocket.sendall(msg_dobry_ruch.encode())
-                                                    #Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
+                                                    # Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
                                                     zmien_gracza()
 
                                             # zwaliduj czy wiadomość jaka otrzymałeś jest ruchem czy jest to int od 1-9
@@ -277,7 +284,9 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
         while True:
             if licznik_graczy < 2:
                 clientsock, clientAddress = ssock.accept()
+
                 Session_id = int(uuid.uuid4())
+                print("Session id: ", Session_id)
                 newthread = ClientThread(clientAddress, clientsock, aktualny_gracz_f(), Session_id)
                 newthread.start()
                 zmien_gracza()
