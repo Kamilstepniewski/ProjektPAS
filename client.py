@@ -232,7 +232,8 @@ with socket.create_connection((SERVER, PORT)) as sock:
                         print('1')
                     if int_login == int_resp:
                         print('Jestem tu')
-                        session_id = resp[24:-4]
+                        session_id = resp[23:-4]
+                        print(session_id)
                         msg = opakuj("SER", login, session_id, 100, len("i am ready"), "i am ready")
                         client.sendall(msg.encode())
                         print("tutaj")
@@ -240,8 +241,12 @@ with socket.create_connection((SERVER, PORT)) as sock:
                             resp = client.recv(1000)
                             print(resp)
                             resp = resp.decode()
+                            print(resp)
+                            print('check')
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
+                                print('A tu jesteś?')
                                 if resp[3:6] == str(login) and session_id == resp[25:-4]: # nie wiem czy chcemy sprawdzać swoje session_id
+                                    print('A tu jesteś? 2')
                                     command = str(input("Podaj ruch:"))
                                     #Tutaj urzytkownik poda ruch i wyśle liczbę, serwer zwaliduje czy była ona poprawna
                                     msg_ruch = opakuj("SERWER",login,session_id,100,len(command),command)
