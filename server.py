@@ -8,7 +8,7 @@ import time
 
 
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id}\r\nMessage_id:{Message_id}\r\nContent_length\r\n{Content_length}\r\nMessage{Message}"
+    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}"
 
 
 def odpakuj(msg):
@@ -47,6 +47,7 @@ def read_message(message):
 
 
 plansza = np.array([[0, 0, 0] for i in range(3)])
+
 aktualny_gracz = 1
 
 ostatni_ruch = -1
@@ -112,6 +113,43 @@ def tlumacz_na_x_y(ruch):
     else:
         return None
 
+def czy_koniec_2():
+    #Sprawdz kolumny
+    global flaga_who_win
+    flaga_who_win = 1
+    #zwróci 0 gdy 1 gracz wygra
+    #zwroci 2 gdy 2 gravz wygra
+    #zwroci 1 gdy remis
+    if (plansza[0][0] == 1 and plansza[1][0] == 1 and plansza[2][0] == 1 or
+            plansza[0][1] == 1 and plansza[1][1] == 1 and plansza[2][1] == 1 or
+            plansza[0][2] == 1 and plansza[1][2] == 1 and plansza[2][2] == 1 or
+            plansza[0][0] == 1 and plansza[0][1] == 1 and plansza[0][2] == 1 or
+            plansza[1][0] == 1 and plansza[1][1] == 1 and plansza[1][2] == 1 or
+            plansza[2][0] == 1 and plansza[2][1] == 1 and plansza[2][2] == 1 or
+            plansza[0][0] == 1 and plansza[1][1] == 1 and plansza[2][2] == 1 or
+            plansza[2][0] == 1 and plansza[1][1] == 1 and plansza[0][2] == 1 ):
+        flaga_who_win = 0
+    elif (plansza[0][0] == -1 and plansza[1][0] == -1 and plansza[2][0] == -1 or
+            plansza[0][1] == -1 and plansza[1][1] == -1 and plansza[2][1] == -1 or
+            plansza[0][2] == -1 and plansza[1][2] == -1 and plansza[2][2] == -1 or
+            plansza[0][0] == -1 and plansza[0][1] == -1 and plansza[0][2] == -1 or
+            plansza[1][0] == -1 and plansza[1][1] == -1 and plansza[1][2] == -1 or
+            plansza[2][0] == -1 and plansza[2][1] == -1 and plansza[2][2] == -1 or
+            plansza[0][0] == -1 and plansza[1][1] == -1 and plansza[2][2] == -1 or
+            plansza[2][0] == -1 and plansza[1][1] == -1 and plansza[0][2] == -1 ):
+        flaga_who_win = 2
+
+    if flaga_who_win == 0:
+        return 0
+    elif flaga_who_win == 2:
+        return 2
+    elif flaga_who_win == 1:
+        return 1
+
+
+    # Sprawdz wiersze
+
+    # Sprawdz po ukosie
 
 def czy_koniec():
     for i in range(3):
@@ -144,8 +182,9 @@ def podaj_wyglad_planszy():
                 wyglad += " "
             elif plansza[i][j] == 1:
                 wyglad += "O"
-            else:
+            elif plansza[i][j] == -1:
                 wyglad += "X"
+    print(wyglad,'-------------------------------------------------------------------------------------')
     return wyglad
 
 
@@ -214,10 +253,10 @@ class ClientThread(threading.Thread):
                         print(To)
                         print(msg)
                         print(From,str(login))
-                        print(Information_about_client_sesion_id)
+                        print(Information_about_client_sesion_id,type(Information_about_client_sesion_id))
                         print(self.session_id)
-                        if "SER" in To and str(login) in From and Information_about_client_sesion_id == str(self.session_id):
-                            msg = Message
+                        if "SER" == To and str(login) == From and Information_about_client_sesion_id == str(self.session_id):
+                            #msg = Message
                             print('Jestem w pętli')
                             print(msg)
                             print(msg[:len("i am ready")] in "i am ready")
@@ -229,38 +268,47 @@ class ClientThread(threading.Thread):
                                     else:
                                         print("jestem tutaj 1")
                                         # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
-                                        if czy_koniec() == 0:
-                                            msg = opakuj(login, "SERWER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                        if czy_koniec_2() == 0:
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
                                                          "YOU WIN PLAYER 0")
                                             self.csocket.sendall(msg.encode())
-                                        elif czy_koniec() == 2:
+                                        elif czy_koniec_2() == 2:
                                             zmien_gracza()
-                                            msg = opakuj(login, "SERWER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
                                                          "YOU WIN PLAYER 0")
                                             self.csocket.sendall(msg.encode())
                                         # Jeśli gra się nie skończyła
                                         else:
                                             # Wyślij wiadomość do gracza  aby podał ruch wraz z aktualnym stanem planszy
-                                            msg_podaj_ruch = opakuj(login, "SERWER", self.session_id, 200,
+                                            msg_podaj_ruch = opakuj(login, "SER", self.session_id, 200,
                                                                     len("PODAJ RUCH"), "PODAJ RUCH")
                                             self.csocket.sendall(msg_podaj_ruch.encode())
                                             # Czeka na ruch klienta
                                             #                                             resp = nasluchuj(self.csocket)
                                             resp = self.csocket.recv(2000)
                                             resp = resp.decode()
-                                            ruch = int(resp[-5:-4])
+                                            msg = odpakuj(resp)
+                                            To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
+                                            print(msg[0:-1])
+                                            if msg[0:-1] == "RUCH":
+                                                ruch = int(msg[4:5])
+                                                print('Ruch: ', ruch)
+
+                                            #ruch = int(resp[-5:-4])
                                             if ruch >= 1 and ruch <= 9:
                                                 x, y = tlumacz_na_x_y(ruch)
-                                                czy_udalo_sie = wykonaj_ruch(x, y, self.csocket)
+                                                czy_udalo_sie = wykonaj_ruch(x, y, aktualny_gracz)
                                                 if czy_udalo_sie == "pole zajete":
-                                                    msg_zly_ruch = opakuj(login, "SERWER", self.session_id, 400,
+                                                    msg_zly_ruch = opakuj(login, "SER", self.session_id, 400,
                                                                           len("BAD MOVE"), "BAD MOVE")
                                                     self.csocket.sendall(msg_zly_ruch.encode())
                                                 elif czy_udalo_sie == "udalo sie":
-                                                    msg_dobry_ruch = opakuj(login, "SERWER", self.session_id, 400,
+                                                    msg_dobry_ruch = opakuj(login, "SER", self.session_id, 400,
                                                                             len("RIGHT MOVE"), "RIGHT MOVE")
                                                     self.csocket.sendall(msg_dobry_ruch.encode())
                                                     # Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
+                                                    podaj_wyglad_planszy()
+                                                    print('-----------------------------------tutaj---------------------------------------------------')
                                                     zmien_gracza()
 
                                             # zwaliduj czy wiadomość jaka otrzymałeś jest ruchem czy jest to int od 1-9
