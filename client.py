@@ -222,9 +222,16 @@ with socket.create_connection((SERVER, PORT)) as sock:
                 resp = resp.decode()
                 print("test -1 ")
                 print(resp)
+
                 if resp != "code:400 login failed":
-                    print(resp[3:6])
-                    if resp[4:7] == str(login):
+                    print(resp[3:6], type(resp[3:6]), len(resp[3:6]))
+                    print(str(login), type(str(login)), len(str(login)))
+                    int_resp = int(resp[3:6])
+                    int_login = int(login)
+                    if int_login == int_resp:
+                        print('1')
+                    if int_login == int_resp:
+                        print('Jestem tu')
                         session_id = resp[24:-4]
                         msg = opakuj("SER", login, session_id, 100, len("i am ready"), "i am ready")
                         client.sendall(msg.encode())
