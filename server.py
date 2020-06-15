@@ -193,7 +193,7 @@ class ClientThread(threading.Thread):
             resp = resp.decode()
             print(resp)
             if resp[:len('To:SER\r\nLogin')] == 'To:SER\r\nLogin':
-                login = resp[13:17]
+                login = resp[14:17]
                 global dictionary_data_users
                 dictionary_data_users[login] = {
                     "session_id": self.session_id,
@@ -213,11 +213,12 @@ class ClientThread(threading.Thread):
                         To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                         print(To)
                         print(msg)
-                        print(From)
+                        print(From,str(login))
                         print(Information_about_client_sesion_id)
                         print(self.session_id)
                         if "SER" in To and str(login) in From and Information_about_client_sesion_id == str(self.session_id):
                             msg = Message
+                            print('Jestem w pętli')
                             print(msg)
                             print(msg[:len("i am ready")] in "i am ready")
                             if msg in "i am ready":
