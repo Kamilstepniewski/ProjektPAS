@@ -36,12 +36,12 @@ def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_len
     return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}\r\n\r\n"
 
 def odpakuj(msg):
-    for i in msg:
-        print([i])
+    #for i in msg:
+    #    print([i])
     to = msg[3:6]
     From = msg[13:16]
     Info_id = msg[53:92]
-    print("Odpakuj: ", Info_id)
+   # print("Odpakuj: ", Info_id)
     Message_id = msg[105:108]
     Content_length = msg[125:128]
     Content_length = int(Content_length)
@@ -72,11 +72,11 @@ def nasluchuj_serwer(serwer):
     data = True
     while data:
         data = serwer.recv(1)
-        print('I receive = ' + data.decode('utf-8'))
+        #print('I receive = ' + data.decode('utf-8'))
         msg += data.decode('utf-8')
         if msg[-4:] == '\r\n\r\n':
             break
-    print(msg)
+    #print(msg)
     return msg
 
 
@@ -117,11 +117,11 @@ with socket.create_connection((SERVER, PORT)) as sock:
                 #resp = resp.decode()
                 resp = nasluchuj_serwer(client)
                 print("test -1 ")
-                print(resp)
+                #print(resp)
 
                 if resp != "code:400 login failed":
-                    print(resp[3:6], type(resp[3:6]), len(resp[3:6]))
-                    print(str(login), type(str(login)), len(str(login)))
+                    #print(resp[3:6], type(resp[3:6]), len(resp[3:6]))
+                    #print(str(login), type(str(login)), len(str(login)))
                     int_resp = int(resp[3:6])
                     int_login = int(login)
                     if int_login == int_resp:
@@ -140,21 +140,21 @@ with socket.create_connection((SERVER, PORT)) as sock:
                             resp =nasluchuj_serwer(client)
                             print('check')
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
-                                print('check 1')
-                                print(resp)
+                                #print('check 1')
+                                #print(resp)
                                 msg = odpakuj(resp)
                                 To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                                 if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
                                     print(msg[-13:-4])
                                     #Podzielić tak jak wygląda plansza
-                                    print('check 2')
+                                    #print('check 2')
 
                                     command = str(input("Podaj ruch:"))
                                     ruch = "RUCH"+ command
                                     #Tutaj urzytkownik poda ruch i wyśle liczbę, serwer zwaliduje czy była ona poprawna
                                     msg_ruch = opakuj("SER",login,session_id,100,len(ruch),ruch)
                                     client.sendall(msg_ruch.encode())
-                                    print('check 2')
+                                    #print('check 2')
                                     #Czekaj na odpowiedz serwera o ruchu
                                     #resp = client.recv(1000)
                                     #resp = resp.decode()
