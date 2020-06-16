@@ -261,6 +261,7 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                 msg = odpakuj(resp)
                                 To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                                 if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
+                                    print(msg[-9:])
                                     print('check 2')
 
                                     command = str(input("Podaj ruch:"))
