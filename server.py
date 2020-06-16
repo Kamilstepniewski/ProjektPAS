@@ -264,24 +264,25 @@ class ClientThread(threading.Thread):
 
                                 while True:
                                     if aktualny_gracz != self.numer_gracza:
-                                        print(aktualny_gracz)
+                                        #print(aktualny_gracz)
+                                        pass
                                     else:
                                         print("jestem tutaj 1")
                                         # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
-                                        if czy_koniec_2() == 0:
+                                        if czy_koniec() == 1:
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
-                                                         "YOU WIN PLAYER 0")
+                                                         "YOU WIN PLAYER 1")
                                             self.csocket.sendall(msg.encode())
-                                        elif czy_koniec_2() == 2:
+                                        elif czy_koniec() == -1:
                                             zmien_gracza()
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
-                                                         "YOU WIN PLAYER 0")
+                                                         "YOU WIN PLAYER -1")
                                             self.csocket.sendall(msg.encode())
                                         # Jeśli gra się nie skończyła
                                         else:
                                             # Wyślij wiadomość do gracza  aby podał ruch wraz z aktualnym stanem planszy
                                             msg_podaj_ruch = opakuj(login, "SER", self.session_id, 200,
-                                                                    len("PODAJ RUCH"), "PODAJ RUCH")
+                                                                    len("PODAJ RUCH"+podaj_wyglad_planszy()), "PODAJ RUCH"+ podaj_wyglad_planszy())
                                             self.csocket.sendall(msg_podaj_ruch.encode())
                                             # Czeka na ruch klienta
                                             #                                             resp = nasluchuj(self.csocket)
@@ -307,8 +308,7 @@ class ClientThread(threading.Thread):
                                                                             len("RIGHT MOVE"), "RIGHT MOVE")
                                                     self.csocket.sendall(msg_dobry_ruch.encode())
                                                     # Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
-                                                    podaj_wyglad_planszy()
-                                                    print('-----------------------------------tutaj---------------------------------------------------')
+
                                                     zmien_gracza()
 
                                             # zwaliduj czy wiadomość jaka otrzymałeś jest ruchem czy jest to int od 1-9
