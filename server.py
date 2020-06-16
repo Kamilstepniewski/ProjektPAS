@@ -8,7 +8,7 @@ import time
 
 
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}"
+    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}\r\n\r\n"
 
 
 def odpakuj(msg):
@@ -184,24 +184,29 @@ def podaj_wyglad_planszy():
                 wyglad += "O"
             elif plansza[i][j] == -1:
                 wyglad += "X"
-    print(wyglad,'-------------------------------------------------------------------------------------')
+    print('Wygląd planszy:',wyglad)
     return wyglad
 
 
+
+
 def nasluchuj(client):
-    data = b""
-    r = True
+    msg = ''
+    data = True
     while data:
-        r = client.recv(1)
-        data += r
-    return data
+        data = client.recv(1)
+        print('I receive = ' + data.decode('utf-8'))
+        msg += data.decode('utf-8')
+        if msg[-4:] == '\r\n\r\n':
+            break
+    print(msg)
+    return msg
 
 
-wykonaj_ruch(2, 1, 1)
+#Funkcja do obslugi wszystkich błędów (msg) albo kod błędu
 
 
-# context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-# context.load_cert_chain(r'C:\Users\patryk.krawczak\Downloads\server.crt', r'C:\Users\patryk.krawczak\Downloads\server.key')
+
 def create_context():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
@@ -228,8 +233,9 @@ class ClientThread(threading.Thread):
     def run(self):
         while True:
             resp = None
-            resp = self.csocket.recv(2000)
-            resp = resp.decode()
+            #resp = self.csocket.recv(2000)
+            resp = nasluchuj(self.csocket)
+            #resp = resp.decode()
             print(resp)
             if resp[:len('To:SER\r\nLogin')] == 'To:SER\r\nLogin':
                 login = resp[14:17]
@@ -244,8 +250,9 @@ class ClientThread(threading.Thread):
                     mess = f'To:{login}\r\nsession_number:{self.session_id}\r\n\r\n'
                     self.csocket.sendall(mess.encode())
                     #                     resp = nasluchuj(self.csocket)
-                    resp = self.csocket.recv(2000)
-                    resp = resp.decode()
+                    #resp = self.csocket.recv(2000)
+                    #resp = resp.decode()
+                    resp = nasluchuj(self.csocket)
 
                     if resp[-19:-4] != "BAD CREDENTIALS":
                         msg = odpakuj(resp)
@@ -286,8 +293,9 @@ class ClientThread(threading.Thread):
                                             self.csocket.sendall(msg_podaj_ruch.encode())
                                             # Czeka na ruch klienta
                                             #                                             resp = nasluchuj(self.csocket)
-                                            resp = self.csocket.recv(2000)
-                                            resp = resp.decode()
+                                            #resp = self.csocket.recv(2000)
+                                            #resp = resp.decode()
+                                            resp = nasluchuj(self.csocket)
                                             msg = odpakuj(resp)
                                             To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                                             print(msg[0:-1])
@@ -330,6 +338,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
     with context.wrap_socket(sock, server_side=True) as ssock:
 
         print("Server started")
+        print(podaj_wyglad_planszy())
         while True:
             if licznik_graczy < 2:
                 clientsock, clientAddress = ssock.accept()
