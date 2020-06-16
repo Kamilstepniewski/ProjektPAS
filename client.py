@@ -33,7 +33,7 @@ context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\selfsigned.crt', key
 # Content-length:\r\n
 # Message:\r\n\r\n
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
-    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}"
+    return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}\r\n\r\n"
 
 def odpakuj(msg):
     for i in msg:
@@ -67,14 +67,17 @@ def read_message(message):
 
 
 # Funkcja nasłuchująca wiadomość od serwera
-def nasluchuj_serwer(client):
-    data = b""
-    r = True
+def nasluchuj_serwer(serwer):
+    msg = ''
+    data = True
     while data:
-        r = client.recv(1)
-        print(r)
-        data += r
-    return data
+        data = serwer.recv(1)
+        print('I receive = ' + data.decode('utf-8'))
+        msg += data.decode('utf-8')
+        if msg[-4:] == '\r\n\r\n':
+            break
+    print(msg)
+    return msg
 
 
 # Będziemy wysyłać poszczególne cyfry poprzez ten sposób będziemy wiedzieć które pole skreślił klient
@@ -91,129 +94,9 @@ def set_plansza(plansza):
         aktualny_stan_planszy[znak] = plansza[znak]
 
 
-def button_click(button, number, aktualny_stan_planszy, list_of_button):
-    global bclick
-    if button["text"] == " ":
-        button["text"] = 'X'
-        bclick = True
-        button["state"] = 'normal'
-        button["state"] = 'disabled'
-        aktualny_stan_planszy[number - 1] = "X"
-        print(aktualny_stan_planszy)
-
-        # Serwer czeka na ruch więc muszę mu wysłać aktualny stan planszy i ruch <- wystarczy że wyślesz numer ruch
-        ruch = str(number)
-        #         msg_stan_planszy_ruch= "".join(aktualny_stan_planszy)+"\n\n"+ruch
-        client.sendall(ruch.encode())
-
-        # Jeżeli ruch prawidłowy to sprawdź co mówi serwer
-        # Czy koniec gry i jaki wynik - ok
-        # ok2 - przyjął ruch ale gra jeszcze nie jest zakonczona
-        # ok0
-        # ok1 gra wygrana lub przerwana
-        global gra_rozpoczeta
-        if not gra_rozpoczeta:
-            msg = b''
-            while True:
-                data = client.recv(1)
-                print("I receive:" + data.decode())
-                msg += data
-                if msg == b'i am ready':
-                    break
-            msg = b''
-            client.sendall(b"START")
-            while True:
-                data = client.recv(1)
-                print("I receive:" + data.decode())
-                msg += data
-                if msg == b'ok':
-                    gra_rozpoczeta = True
-                    break
-
-        if gra_rozpoczeta:
-            msg = b''
-            while True:
-                data = client.recv(1)
-                print("I receive:" + data.decode())
-                msg += data
-                if msg == b'musisz poczekac':
-                    msg = b""
-                    print("czekam")
-                    client.sendall(b"ok")
-                    msg = b''
-                    pass
-
-                if msg[:10] == b"podaj ruch" and len(msg) == 19:
-                    plansza = msg[10:]
-                    plansza = plansza.decode()
-                    for i in range(9):
-                        if plansza[i] != " ":
-                            list_of_button[i + 1]["text"] = plansza[i]
-                            list_of_button[i + 1]["state"] = 'normal'
-                            list_of_button[i + 1]["state"] = 'disabled'
-                            aktualny_stan_planszy[i] = plansza[i]
-                        client.sendall(ruch.encode())
-                    print("wykonałem ruch")
-                    break
-            msg = b''
-            while True:
-                data = client.recv(1)
-                print("I receive:" + data.decode())
-
-                msg += data
-                print(msg)
-                if (msg == b'nieprawidlowy ruch'):
-                    button["text"] = ' '
-                    bclick = False
-                    button["state"] = 'normal'
-                    aktualny_stan_planszy[number - 1] = " "
-                    return
-                if (msg == b'ok1'):
-                    print("Wygrana")
-                    return
-                elif (msg == b'ok0'):
-                    print("Przegrana")
-                    return
-                elif (msg == b'ok2'):
-                    # Gra toczy się dalej
-                    # odczytaj ruch
-                    # Tutaj najlepiej jakby serwer wysłał numer(numer potrzebny do zaktualizowania planszy)wtedy:
-                    # Jeśli wysłał ok2 to powinien wysłać numer ruchu
-
-                    msg = client.recv(1)
-                    msg = int(msg.decode())
-                    number_button_from_server = msg
-                    list_of_button[number_button_from_server]['text'] = 'O'
-                    list_of_button[number_button_from_server]["state"] = 'normal'
-                    list_of_button[number_button_from_server]["state"] = 'disabled'
-                    aktualny_stan_planszy[number_button_from_server - 1] = "O"
-
-                    break
-
-                    break
 
 
-def New_game():
-    global aktualny_stan_planszy
-
-    aktualny_stan_planszy = [" ", " ", " ", " ", " ", " ", " ", " ", " "]
-
-    msg_start = "START"
-
-    login = np.random.randint(100, 999)
-
-    msg_start = f'To:Server\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
-
-    client.sendall(msg_start.encode())
-
-    # client.sendall(msg_start.encode())
-
-    # Czy mogę zacząć grę?
-
-    # od_serwera = client.recv(4024)
-
-    od_serwera = 'ok'
-
+#Funkcja do obslugi wszystkich błędów (msg) albo kod błędu
 
 import socket
 
@@ -230,8 +113,9 @@ with socket.create_connection((SERVER, PORT)) as sock:
                 client.sendall(msg_start.encode())
                 print(msg_start)
                 resp = None
-                resp = client.recv(1000)
-                resp = resp.decode()
+                #resp = client.recv(1000)
+                #resp = resp.decode()
+                resp = nasluchuj_serwer(client)
                 print("test -1 ")
                 print(resp)
 
@@ -250,10 +134,10 @@ with socket.create_connection((SERVER, PORT)) as sock:
                         client.sendall(msg.encode())
                         print("tutaj")
                         while True:
-                            resp = client.recv(1000)
-                            print(resp)
-                            resp = resp.decode()
-
+                            #resp = client.recv(1000)
+                            #print(resp)
+                            #resp = resp.decode()
+                            resp =nasluchuj_serwer(client)
                             print('check')
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                 print('check 1')
@@ -261,7 +145,8 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                 msg = odpakuj(resp)
                                 To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                                 if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
-                                    print(msg[-9:])
+                                    print(msg[-13:-4])
+                                    #Podzielić tak jak wygląda plansza
                                     print('check 2')
 
                                     command = str(input("Podaj ruch:"))
@@ -271,8 +156,9 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                     client.sendall(msg_ruch.encode())
                                     print('check 2')
                                     #Czekaj na odpowiedz serwera o ruchu
-                                    resp = client.recv(1000)
-                                    resp = resp.decode()
+                                    #resp = client.recv(1000)
+                                    #resp = resp.decode()
+                                    resp = nasluchuj_serwer(client)
                                     if resp[3:6] == str(login) and session_id == resp[25:-4]:
                                         if resp[-12:-4] == "BAD MOVE":
                                             print("BAD MOVE")
