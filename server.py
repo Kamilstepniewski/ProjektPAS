@@ -12,12 +12,12 @@ def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_len
 
 
 def odpakuj(msg):
-    for i in msg:
-        print([i])
+    #for i in msg:
+    #    print([i])
     to = msg[3:6]
     From = msg[13:16]
     Info_id = msg[53:92]
-    print("Odpakuj: ", Info_id)
+    #print("Odpakuj: ", Info_id)
     Message_id = msg[105:108]
     Content_length = msg[125:128]
     Content_length = int(Content_length)
@@ -90,26 +90,31 @@ def zmien_gracza():
     global aktualny_gracz
     aktualny_gracz = (-1) * aktualny_gracz
 
+# Tablica
+
+# |7|8|9|
+# |4|5|6|
+# |1|2|3|
 
 def tlumacz_na_x_y(ruch):
     if ruch == 1:
-        return 0, 0
-    if ruch == 2:
-        return 0, 1
-    if ruch == 3:
         return 0, 2
+    if ruch == 2:
+        return 1, 2
+    if ruch == 3:
+        return 2, 2
     if ruch == 4:
-        return 1, 0
+        return 0, 1
     if ruch == 5:
         return 1, 1
     if ruch == 6:
-        return 1, 2
-    if ruch == 7:
-        return 2, 0
-    if ruch == 8:
         return 2, 1
+    if ruch == 7:
+        return 0, 0
+    if ruch == 8:
+        return 1, 0
     if ruch == 9:
-        return 2, 2
+        return 2, 0
     else:
         return None
 
@@ -175,7 +180,7 @@ def czy_koniec():
 
 
 def podaj_wyglad_planszy():
-    wyglad = ""
+    wyglad =
     for i in range(3):
         for j in range(3):
             if plansza[i][j] == 0:
@@ -195,15 +200,17 @@ def nasluchuj(client):
     data = True
     while data:
         data = client.recv(1)
-        print('I receive = ' + data.decode('utf-8'))
+        #print('I receive = ' + data.decode('utf-8'))
         msg += data.decode('utf-8')
         if msg[-4:] == '\r\n\r\n':
             break
-    print(msg)
+    #print(msg)
     return msg
 
 
 #Funkcja do obslugi wszystkich błędów (msg) albo kod błędu
+
+
 
 
 
@@ -275,6 +282,7 @@ class ClientThread(threading.Thread):
                                         pass
                                     else:
                                         print("jestem tutaj 1")
+                                        print(podaj_wyglad_planszy())
                                         # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
                                         if czy_koniec() == 1:
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
@@ -284,6 +292,14 @@ class ClientThread(threading.Thread):
                                             zmien_gracza()
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
                                                          "YOU WIN PLAYER -1")
+                                            self.csocket.sendall(msg.encode())
+                                        elif czy_koniec() == 0:
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WI....OHHH SORRY. YOU DRAW"),
+                                                         "YOU WI....OHHH SORRY. YOU DRAW")
+                                            self.csocket.sendall(msg.encode())
+                                            zmien_gracza()
+                                            msg = opakuj(login, "SER", self.session_id, 200,len("YOU WI....OHHH SORRY. YOU DRAW"),
+                                                         "YOU WI....OHHH SORRY. YOU DRAW")
                                             self.csocket.sendall(msg.encode())
                                         # Jeśli gra się nie skończyła
                                         else:
@@ -312,7 +328,7 @@ class ClientThread(threading.Thread):
                                                                           len("BAD MOVE"), "BAD MOVE")
                                                     self.csocket.sendall(msg_zly_ruch.encode())
                                                 elif czy_udalo_sie == "udalo sie":
-                                                    msg_dobry_ruch = opakuj(login, "SER", self.session_id, 400,
+                                                    msg_dobry_ruch = opakuj(login, "SER", self.session_id, 200,
                                                                             len("RIGHT MOVE"), "RIGHT MOVE")
                                                     self.csocket.sendall(msg_dobry_ruch.encode())
                                                     # Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
@@ -338,7 +354,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
     with context.wrap_socket(sock, server_side=True) as ssock:
 
         print("Server started")
-        print(podaj_wyglad_planszy())
+        #print(podaj_wyglad_planszy())
         while True:
             if licznik_graczy < 2:
                 clientsock, clientAddress = ssock.accept()
