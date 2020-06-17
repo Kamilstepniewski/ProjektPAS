@@ -13,8 +13,8 @@ root.geometry("600x600")
 root['background'] = '#00ace6'
 
 # requests.get("http://127.0.0.1", verify=r'C:\Users\admin\Downloads\server.crt')
-context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=r'C:\Users\admin\Downloads\selfsigned.crt')
-context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\selfsigned.crt', keyfile=r'C:\Users\admin\Downloads\private.key')
+context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt')
+context.load_cert_chain(certfile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt', keyfile=r'C:\Users\patryk.krawczak\Downloads\private.key')
 
 
 # context.load_verify_locations(cafile=r'C:\Users\admin\Downloads\client.crt')
@@ -34,6 +34,21 @@ context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\selfsigned.crt', key
 # Message:\r\n\r\n
 def opakuj(To, From, Information_about_client_sesion_id, Message_id, Content_length, Message):
     return f"To:{To}\r\nFrom:{From}\r\nInformation_about_client_sesion_id:{Information_about_client_sesion_id:39}\r\nMessage_id:{Message_id:03}\r\nContent_length:{Content_length:03}\r\nMessage:{Message}\r\n\r\n"
+
+def dekoduj_wygląd(string):
+    licznik = 0
+    plansza =  [[" ", " ", " "] for i in range(3)]
+    for j in range(3):
+        for i in range(3):
+            if string[licznik]==" ":
+                plansza[i][j] = " "
+            elif string[licznik] == "O":
+                plansza[i][j] = "O"
+            elif string[licznik] == "X":
+                plansza[i][j] = "X"
+            licznik += 1
+    for i in plansza:
+        print("|".join(i))
 
 def odpakuj(msg):
     #for i in msg:
@@ -154,7 +169,7 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                     #print(Message_id=='200')
                                     #print(msg[0:14]=='YOU WIN PLAYER')
                                     if msg[0:10] == 'PODAJ RUCH':
-
+                                        dekoduj_wygląd(msg[10:])
                                         command = str(input("Podaj ruch:"))
                                         ruch = "RUCH"+ command
                                         #Tutaj urzytkownik poda ruch i wyśle liczbę, serwer zwaliduje czy była ona poprawna
