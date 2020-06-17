@@ -250,7 +250,9 @@ class ClientThread(threading.Thread):
 
         while True:
             set_reset(self.numer_gry)
-            if lista_gier[self.numer_gry]["aktualny_gracz"] == 2:
+            print("RESET PLANSZY")
+            print(lista_gier[self.numer_gry]["czy_reset"])
+            if lista_gier[self.numer_gry]["czy_reset"] > 2:
                 reset_planszy(self.numer_gry)
             resp = None
             #resp = self.csocket.recv(2000)
