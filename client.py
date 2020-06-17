@@ -167,11 +167,11 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                             if resp[-14:-4] == "RIGHT MOVE":
                                                 print("RIGHT MOVE")
                                                 #Dobry ruch więc czekam na swoją kolej
-                                    elif msg[0:14] == 'YOU WIN PLAYER':
+                                    elif msg[0:14] == 'YOU WIN PLAYER' and Message_id == 200:
                                         print('You Win')
-                                    elif msg[0:15] == 'YOU LOSE PLAYER':
+                                    elif msg[0:15] == 'YOU LOSE PLAYER' and Message_id == 200:
                                         print('You LOSE')
-                                    elif msg[0:30]=='YOU WI....OHHH SORRY. YOU DRAW':
+                                    elif msg[0:30]=='YOU WI....OHHH SORRY. YOU DRAW' and Message_id == 200:
                                         print('DRAW')
 
 
