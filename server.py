@@ -97,9 +97,10 @@ def set_plansza(new_plansza,numer_gry):
 
 def wykonaj_ruch(x, y, gracz,numer_gry):
     
-    
+#     print("gracz = ",gracz)
     
     plansza = get_plansza(numer_gry)
+#     print(plansza)
     if plansza[x][y] != 0:
         return "pole zajete"
     else:
@@ -110,7 +111,10 @@ def wykonaj_ruch(x, y, gracz,numer_gry):
 
 def zmien_gracza(numer_gry):
     global lista_gier
+#     print("zmiana gracza")
+#     print(lista_gier[numer_gry]["aktualny_gracz"])
     lista_gier[numer_gry]["aktualny_gracz"] = (-1) * lista_gier[numer_gry]["aktualny_gracz"]
+#     print(lista_gier[numer_gry]["aktualny_gracz"])
 
 
 # Tablica
@@ -141,38 +145,7 @@ def tlumacz_na_x_y(ruch):
     else:
         return None
 
-def czy_koniec_2():
-    #Sprawdz kolumny
-    global flaga_who_win
-    flaga_who_win = 1
-    #zwróci 0 gdy 1 gracz wygra
-    #zwroci 2 gdy 2 gravz wygra
-    #zwroci 1 gdy remis
-    if (plansza[0][0] == 1 and plansza[1][0] == 1 and plansza[2][0] == 1 or
-            plansza[0][1] == 1 and plansza[1][1] == 1 and plansza[2][1] == 1 or
-            plansza[0][2] == 1 and plansza[1][2] == 1 and plansza[2][2] == 1 or
-            plansza[0][0] == 1 and plansza[0][1] == 1 and plansza[0][2] == 1 or
-            plansza[1][0] == 1 and plansza[1][1] == 1 and plansza[1][2] == 1 or
-            plansza[2][0] == 1 and plansza[2][1] == 1 and plansza[2][2] == 1 or
-            plansza[0][0] == 1 and plansza[1][1] == 1 and plansza[2][2] == 1 or
-            plansza[2][0] == 1 and plansza[1][1] == 1 and plansza[0][2] == 1 ):
-        flaga_who_win = 0
-    elif (plansza[0][0] == -1 and plansza[1][0] == -1 and plansza[2][0] == -1 or
-            plansza[0][1] == -1 and plansza[1][1] == -1 and plansza[2][1] == -1 or
-            plansza[0][2] == -1 and plansza[1][2] == -1 and plansza[2][2] == -1 or
-            plansza[0][0] == -1 and plansza[0][1] == -1 and plansza[0][2] == -1 or
-            plansza[1][0] == -1 and plansza[1][1] == -1 and plansza[1][2] == -1 or
-            plansza[2][0] == -1 and plansza[2][1] == -1 and plansza[2][2] == -1 or
-            plansza[0][0] == -1 and plansza[1][1] == -1 and plansza[2][2] == -1 or
-            plansza[2][0] == -1 and plansza[1][1] == -1 and plansza[0][2] == -1 ):
-        flaga_who_win = 2
 
-    if flaga_who_win == 0:
-        return 0
-    elif flaga_who_win == 2:
-        return 2
-    elif flaga_who_win == 1:
-        return 1
 
 
     # Sprawdz wiersze
@@ -377,7 +350,7 @@ class ClientThread(threading.Thread):
                                             #ruch = int(resp[-5:-4])
                                             if ruch >= 1 and ruch <= 9:
                                                 x, y = tlumacz_na_x_y(ruch)
-                                                czy_udalo_sie = wykonaj_ruch(x, y, aktualny_gracz,self.numer_gry)
+                                                czy_udalo_sie = wykonaj_ruch(x, y, lista_gier[self.numer_gry]['aktualny_gracz'],self.numer_gry)
                                                 if czy_udalo_sie == "pole zajete":
                                                     msg_zly_ruch = opakuj(login, "SER", self.session_id, 400,
                                                                           len("BAD MOVE"), "BAD MOVE")
