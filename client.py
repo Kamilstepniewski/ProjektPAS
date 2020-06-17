@@ -137,7 +137,7 @@ with socket.create_connection((SERVER, PORT)) as sock:
                             #resp = client.recv(1000)
                             #print(resp)
                             #resp = resp.decode()
-                            resp =nasluchuj_serwer(client)
+                            resp = nasluchuj_serwer(client)
                             print('check')
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                 #print('check 1')
@@ -145,26 +145,35 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                 msg = odpakuj(resp)
                                 To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                                 if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
-                                    print(msg[-13:-4])
+                                    print(msg[0:10])
+                                    print('Cale msg',msg)
                                     #Podzielić tak jak wygląda plansza
-                                    #print('check 2')
+                                    print('check 2')
+                                    if msg[0:10] == 'PODAJ RUCH':
 
-                                    command = str(input("Podaj ruch:"))
-                                    ruch = "RUCH"+ command
-                                    #Tutaj urzytkownik poda ruch i wyśle liczbę, serwer zwaliduje czy była ona poprawna
-                                    msg_ruch = opakuj("SER",login,session_id,100,len(ruch),ruch)
-                                    client.sendall(msg_ruch.encode())
-                                    #print('check 2')
-                                    #Czekaj na odpowiedz serwera o ruchu
-                                    #resp = client.recv(1000)
-                                    #resp = resp.decode()
-                                    resp = nasluchuj_serwer(client)
-                                    if resp[3:6] == str(login) and session_id == resp[25:-4]:
-                                        if resp[-12:-4] == "BAD MOVE":
-                                            print("BAD MOVE")
-                                        if resp[-14:-4] == "RIGHT MOVE":
-                                            print("RIGHT MOVE")
-                                            #Dobry ruch więc czekam na swoją kolej
+                                        command = str(input("Podaj ruch:"))
+                                        ruch = "RUCH"+ command
+                                        #Tutaj urzytkownik poda ruch i wyśle liczbę, serwer zwaliduje czy była ona poprawna
+                                        msg_ruch = opakuj("SER",login,session_id,100,len(ruch),ruch)
+                                        client.sendall(msg_ruch.encode())
+                                        #print('check 2')
+                                        #Czekaj na odpowiedz serwera o ruchu
+                                        #resp = client.recv(1000)
+                                        #resp = resp.decode()
+                                        resp = nasluchuj_serwer(client)
+                                        if resp[3:6] == str(login) and session_id == resp[25:-4]:
+                                            if resp[-12:-4] == "BAD MOVE":
+                                                print("BAD MOVE")
+                                            if resp[-14:-4] == "RIGHT MOVE":
+                                                print("RIGHT MOVE")
+                                                #Dobry ruch więc czekam na swoją kolej
+                                    elif msg[0:14] == 'YOU WIN PLAYER':
+                                        print('You Win')
+                                    elif msg[0:15] == 'YOU LOSE PLAYER':
+                                        print('You LOSE')
+                                    elif msg[0:30]=='YOU WI....OHHH SORRY. YOU DRAW':
+                                        print('DRAW')
+
 
 
 
