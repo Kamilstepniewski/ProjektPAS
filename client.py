@@ -106,17 +106,17 @@ with socket.create_connection((SERVER, PORT)) as sock:
     with context.wrap_socket(sock, server_hostname="localhost") as client:
         session_id = None
         while True:
-            command = str(input("podaj komendę"))
+            command = str(input("Podaj komendę"))
             if command == "start":
                 login = np.random.randint(100, 999)
                 msg_start = f'To:SER\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
                 client.sendall(msg_start.encode())
-                print(msg_start)
+                #print(msg_start)
                 resp = None
                 #resp = client.recv(1000)
                 #resp = resp.decode()
                 resp = nasluchuj_serwer(client)
-                print("test -1 ")
+                #print("test -1 ")
                 #print(resp)
 
                 if resp != "code:400 login failed":
@@ -125,30 +125,34 @@ with socket.create_connection((SERVER, PORT)) as sock:
                     int_resp = int(resp[3:6])
                     int_login = int(login)
                     if int_login == int_resp:
-                        print('1')
+                        #print('1')
+                        pass
                     if int_login == int_resp:
-                        print('Jestem tu')
+                        #print('Jestem tu')
                         session_id = resp[23:-4]
-                        print(session_id)
+                        #print(session_id)
                         msg = opakuj("SER", login, session_id, 100, len("i am ready"), "i am ready")
                         client.sendall(msg.encode())
-                        print("tutaj")
+                        #print("tutaj")
                         while True:
                             #resp = client.recv(1000)
                             #print(resp)
                             #resp = resp.decode()
                             resp = nasluchuj_serwer(client)
-                            print('check')
+                            #print('check')
                             if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                 #print('check 1')
                                 #print(resp)
                                 msg = odpakuj(resp)
                                 To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
+
                                 if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
-                                    print(msg[0:10])
-                                    print('Cale msg',msg)
+                                    #print(msg[0:14])
+                                    #print('Cale msg',msg)
                                     #Podzielić tak jak wygląda plansza
-                                    print('check 2')
+                                    #print('check 2')
+                                    #print(Message_id=='200')
+                                    #print(msg[0:14]=='YOU WIN PLAYER')
                                     if msg[0:10] == 'PODAJ RUCH':
 
                                         command = str(input("Podaj ruch:"))
@@ -160,19 +164,29 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                         #Czekaj na odpowiedz serwera o ruchu
                                         #resp = client.recv(1000)
                                         #resp = resp.decode()
+
                                         resp = nasluchuj_serwer(client)
-                                        if resp[3:6] == str(login) and session_id == resp[25:-4]:
+                                        #print(resp[3:6]==str(login))
+                                        wiad = odpakuj(resp)
+                                        To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = wiad
+                                        #print(Information_about_client_sesion_id == session_id)
+                                        #print(session_id == resp[25:-4])
+                                        if resp[3:6] == str(login) and session_id == Information_about_client_sesion_id:
                                             if resp[-12:-4] == "BAD MOVE":
                                                 print("BAD MOVE")
                                             if resp[-14:-4] == "RIGHT MOVE":
                                                 print("RIGHT MOVE")
                                                 #Dobry ruch więc czekam na swoją kolej
-                                    elif msg[0:14] == 'YOU WIN PLAYER' and Message_id == 200:
+
+                                    elif msg[0:14] == 'YOU WIN PLAYER' and Message_id == '200':
                                         print('You Win')
-                                    elif msg[0:15] == 'YOU LOSE PLAYER' and Message_id == 200:
-                                        print('You LOSE')
-                                    elif msg[0:30]=='YOU WI....OHHH SORRY. YOU DRAW' and Message_id == 200:
+                                        break
+                                    elif msg[0:15] == 'YOU LOSE PLAYER' and Message_id == '200':
+                                        print('You Lose')
+                                        break
+                                    elif msg[0:30]=='YOU WI....OHHH SORRY. YOU DRAW' and Message_id == '200':
                                         print('DRAW')
+                                        break
 
 
 
