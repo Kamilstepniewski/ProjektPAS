@@ -55,51 +55,63 @@ ostatni_ruch = -1
 
 czy_reset = 0
 
-def zeruj_reset():
-    global czy_reset
-    czy_reset = 0
-
-def set_reset():
-    global czy_reset
-    czy_reset += 1
-
-def set_ostatni_ruch(number):
-    global ostatni_ruch
-    ostatni_ruch = number
+lista_gier = []
 
 
-def reset_planszy():
-    global plansza
-    plansza = np.array([[0, 0, 0] for i in range(3)])
-    zeruj_reset()
+def zeruj_reset(numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["czy_reset"] = 0
+
+def set_reset(numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["czy_reset"] += 1
 
 
-def aktualny_gracz_f():
-    return aktualny_gracz
+def set_ostatni_ruch(number,numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["ostatni_ruch"] =number
 
 
-def get_plansza():
-    return plansza.copy()
+
+def reset_planszy(numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["plansza"] =np.array([[0, 0, 0] for i in range(3)])
+    zeruj_reset(numer_gry)
 
 
-def set_plansza(new_plansza):
-    global plansza
-    plansza = new_plansza
+def aktualny_gracz_f(numer_gry):
+    
+    return lista_gier[numer_gry]["aktualny_gracz"]
 
 
-def wykonaj_ruch(x, y, gracz):
-    plansza = get_plansza()
+def get_plansza(numer_gry):
+    return lista_gier[numer_gry]["plansza"].copy()
+
+
+def set_plansza(new_plansza,numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["plansza"] =new_plansza
+    
+    
+
+
+def wykonaj_ruch(x, y, gracz,numer_gry):
+    
+    
+    
+    plansza = get_plansza(numer_gry)
     if plansza[x][y] != 0:
         return "pole zajete"
     else:
         plansza[x][y] = gracz
-        set_plansza(plansza)
+        set_plansza(plansza,numer_gry)
     return "udalo sie"
 
 
-def zmien_gracza():
-    global aktualny_gracz
-    aktualny_gracz = (-1) * aktualny_gracz
+def zmien_gracza(numer_gry):
+    global lista_gier
+    lista_gier[numer_gry]["aktualny_gracz"] = (-1) * lista_gier[numer_gry]["aktualny_gracz"]
+
 
 # Tablica
 
@@ -167,7 +179,8 @@ def czy_koniec_2():
 
     # Sprawdz po ukosie
 
-def czy_koniec():
+def czy_koniec(numer_gry):
+    plansza = get_plansza(numer_gry)
     for i in range(3):
         if plansza[i][0] == plansza[i][1] and plansza[i][2] == plansza[i][1] and plansza[i][2] != 0:
             return plansza[i][0]
@@ -190,7 +203,8 @@ def czy_koniec():
         return 2
 
 
-def podaj_wyglad_planszy():
+def podaj_wyglad_planszy(numer_gry):
+    plansza = get_plansza(numer_gry)
     wyglad = ''
     wyglad_2 = []
     for i in range(3):
@@ -233,9 +247,9 @@ def nasluchuj(client):
 def create_context():
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
     context.verify_mode = ssl.CERT_REQUIRED
-    context.load_cert_chain(certfile=r'C:\Users\admin\Downloads\selfsigned.crt',
-                            keyfile=r'C:\Users\admin\Downloads\private.key')
-    context.load_verify_locations(cafile=r'C:\Users\admin\Downloads\selfsigned.crt')
+    context.load_cert_chain(certfile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt',
+                            keyfile=r'C:\Users\patryk.krawczak\Downloads\private.key')
+    context.load_verify_locations(cafile=r'C:\Users\patryk.krawczak\Downloads\selfsigned.crt')
 
     return context
 
@@ -246,7 +260,7 @@ dictionary_data_users = {}
 
 
 class ClientThread(threading.Thread):
-    def __init__(self, clientAddress, clientsocket, numer_gracza, session_id):
+    def __init__(self, clientAddress, clientsocket, numer_gracza, session_id,numer_gry):
         print("Startuje nowy watek")
         threading.Thread.__init__(self)
         self.csocket = clientsocket
@@ -254,6 +268,7 @@ class ClientThread(threading.Thread):
         self.session_id = session_id
         self.aktywna_gra = True
         self._stop_event = threading.Event()
+        self.numer_gry = numer_gry
 
     def stop(self):
         self._stop_event.set()
@@ -261,9 +276,9 @@ class ClientThread(threading.Thread):
     def run(self):
 
         while True:
-            set_reset()
+            set_reset(self.numer_gry)
             if czy_reset == 2:
-                reset_planszy()
+                reset_planszy(self.numer_gry)
             resp = None
             #resp = self.csocket.recv(2000)
             resp = nasluchuj(self.csocket)
@@ -302,48 +317,50 @@ class ClientThread(threading.Thread):
                             if msg in "i am ready":
 
                                 while True:
-                                    if aktualny_gracz != self.numer_gracza:
+                                    if lista_gier[self.numer_gry]["aktualny_gracz"] != self.numer_gracza:
                                         #print(aktualny_gracz)
                                         pass
-                                    elif licznik_graczy < 2:
+                                    elif lista_gier[self.numer_gry]["licznik_graczy"] < 2:
                                         pass
                                     else:
                                         #print("jestem tutaj 1")
                                         #print(podaj_wyglad_planszy())
                                         # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
-                                        if czy_koniec() == self.numer_gracza:
+                                        if czy_koniec(self.numer_gry) == self.numer_gracza:
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 1"),
                                                          "YOU WIN PLAYER 1")
                                             self.csocket.sendall(msg.encode())
 
-                                            zmien_gracza()
+                                            zmien_gracza(self.numer_gry)
                                             #self.aktywna_gra = False
                                             #self.stop()
                                             break
 
-                                        elif czy_koniec() == -1*self.numer_gracza:
+                                        elif czy_koniec(self.numer_gry) == -1*self.numer_gracza:
 
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU LOSE PLAYER 1"),
                                                          "YOU LOSE PLAYER 1")
                                             self.csocket.sendall(msg.encode())
-                                            zmien_gracza()
+                                            zmien_gracza(self.numer_gry)
                                             #self.stop()
                                             #self.aktywna_gra = False
                                             break
-                                        elif czy_koniec() == 0:
+                                        elif czy_koniec(self.numer_gry) == 0:
                                             msg = opakuj(login, "SER", self.session_id, 200, len("YOU WI....OHHH SORRY. YOU DRAW"),
                                                          "YOU WI....OHHH SORRY. YOU DRAW")
                                             self.csocket.sendall(msg.encode())
 
-                                            zmien_gracza()
+                                            zmien_gracza(self.numer_gry)
                                             #self.stop()
                                             #self.aktywna_gra = False
                                             break
                                         # Jeśli gra się nie skończyła
                                         else:
                                             # Wyślij wiadomość do gracza  aby podał ruch wraz z aktualnym stanem planszy
-                                            msg_podaj_ruch = opakuj(login, "SER", self.session_id, 200,
-                                                                    len("PODAJ RUCH"+podaj_wyglad_planszy()), "PODAJ RUCH"+ podaj_wyglad_planszy())
+                                            msg_podaj_ruch = opakuj(login, "SER", 
+                                                                    self.session_id, 200,
+                                                                    len("PODAJ RUCH"+podaj_wyglad_planszy(self.numer_gry)),
+                                                                    "PODAJ RUCH"+ podaj_wyglad_planszy(self.numer_gry))
                                             self.csocket.sendall(msg_podaj_ruch.encode())
                                             # Czeka na ruch klienta
                                             #                                             resp = nasluchuj(self.csocket)
@@ -360,7 +377,7 @@ class ClientThread(threading.Thread):
                                             #ruch = int(resp[-5:-4])
                                             if ruch >= 1 and ruch <= 9:
                                                 x, y = tlumacz_na_x_y(ruch)
-                                                czy_udalo_sie = wykonaj_ruch(x, y, aktualny_gracz)
+                                                czy_udalo_sie = wykonaj_ruch(x, y, aktualny_gracz,self.numer_gry)
                                                 if czy_udalo_sie == "pole zajete":
                                                     msg_zly_ruch = opakuj(login, "SER", self.session_id, 400,
                                                                           len("BAD MOVE"), "BAD MOVE")
@@ -371,7 +388,7 @@ class ClientThread(threading.Thread):
                                                     self.csocket.sendall(msg_dobry_ruch.encode())
                                                     # Dobry ruch więc muszę zmienić gracza i powtórzyć pętle
 
-                                                    zmien_gracza()
+                                                    zmien_gracza(self.numer_gry)
 
                                             # zwaliduj czy wiadomość jaka otrzymałeś jest ruchem czy jest to int od 1-9
 
@@ -392,14 +409,20 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0) as sock:
     with context.wrap_socket(sock, server_side=True) as ssock:
 
         print("Server started")
+        aktualna_gra_numer = -1
         while True:
-            if licznik_graczy < 2:
-                clientsock, clientAddress = ssock.accept()
+            if licznik_graczy%2 == 0:
+                lista_gier.append({"ostatni_ruch":-1,"plansza":np.array([[0, 0, 0] for i in range(3)]),"aktualny_gracz":1,"czy_reset":0,"licznik_graczy":0})
+                aktualna_gra_numer += 1
 
-                Session_id = int(uuid.uuid4())
-                Session_id = "0" * (39 - len(str(Session_id))) + str(Session_id)
-                #print("Session id: ", Session_id)
-                newthread = ClientThread(clientAddress, clientsock, aktualny_gracz_f(), Session_id)
-                newthread.start()
-                zmien_gracza()
-                licznik_graczy += 1
+            clientsock, clientAddress = ssock.accept()
+
+            Session_id = int(uuid.uuid4())
+            Session_id = "0" * (39 - len(str(Session_id))) + str(Session_id)
+            #print("Session id: ", Session_id)
+            newthread = ClientThread(clientAddress, clientsock, aktualny_gracz_f(aktualna_gra_numer), Session_id,aktualna_gra_numer)
+            lista_gier[aktualna_gra_numer]["licznik_graczy"] += 1
+            newthread.start()
+            zmien_gracza(aktualna_gra_numer)
+            licznik_graczy += 1
+            print(lista_gier)
