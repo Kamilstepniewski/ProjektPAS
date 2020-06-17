@@ -180,16 +180,21 @@ def czy_koniec():
 
 
 def podaj_wyglad_planszy():
-    wyglad =
+    wyglad = ''
+    wyglad_2 = []
     for i in range(3):
         for j in range(3):
             if plansza[i][j] == 0:
                 wyglad += " "
+                wyglad_2.append(' ')
             elif plansza[i][j] == 1:
                 wyglad += "O"
+                wyglad_2.append('O')
             elif plansza[i][j] == -1:
                 wyglad += "X"
+                wyglad_2.append('X')
     print('Wygląd planszy:',wyglad)
+    print('Wyglad2:',wyglad_2)
     return wyglad
 
 
@@ -266,7 +271,7 @@ class ClientThread(threading.Thread):
                         To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
                         print(To)
                         print(msg)
-                        print(From,str(login))
+                        print(From,str(login),type(From))
                         print(Information_about_client_sesion_id,type(Information_about_client_sesion_id))
                         print(self.session_id)
                         if "SER" == To and str(login) == From and Information_about_client_sesion_id == str(self.session_id):
@@ -285,12 +290,19 @@ class ClientThread(threading.Thread):
                                         print(podaj_wyglad_planszy())
                                         # Sprawdzam która gra się skończyła i wysyłam do jednego i drugiego klienta informacje o tym
                                         if czy_koniec() == 1:
-                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 1"),
                                                          "YOU WIN PLAYER 1")
                                             self.csocket.sendall(msg.encode())
+
+                                            zmien_gracza()
+
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU LOSE PLAYER 1"),
+                                                         "YOU LOSE PLAYER 1")
+                                            self.csocket.sendall(msg.encode())
+
                                         elif czy_koniec() == -1:
                                             zmien_gracza()
-                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER 0"),
+                                            msg = opakuj(login, "SER", self.session_id, 200, len("YOU WIN PLAYER -1"),
                                                          "YOU WIN PLAYER -1")
                                             self.csocket.sendall(msg.encode())
                                         elif czy_koniec() == 0:
