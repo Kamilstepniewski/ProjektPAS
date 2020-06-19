@@ -6,6 +6,7 @@ import numpy as np
 import pygame
 from grid import Grid
 import os
+import time
 
 os.environ['SDL_VIDEO_WINDOW_POS'] = '850,100'
 
@@ -153,6 +154,28 @@ def translate_pos_to_number(pos_x,pos_y):
 import socket
 
 pygame.init()
+
+def text_objects(text, font):
+    textSurface = font.render(text, True, (0,0,0))
+    return textSurface, textSurface.get_rect()
+
+def message_display(text):
+    largeText = pygame.font.Font('freesansbold.ttf',115)
+    TextSurf, TextRect = text_objects(text, largeText)
+    TextRect.center = ((600/2),(700/2))
+    surface.blit(TextSurf, TextRect)
+
+    pygame.display.update()
+
+    time.sleep(2)
+
+def You_Win():
+    message_display('You Win')
+def You_Lose():
+    message_display('You Lose')
+def Draw():
+    message_display('Draw')
+
 grid = Grid()
 running = True
 playing = 'True'
@@ -178,11 +201,16 @@ with socket.create_connection((SERVER, PORT)) as sock:
                     if event.type == pygame.QUIT:
                         running = False
                     if event.type == pygame.MOUSEBUTTONDOWN:
-                        if pygame.mouse.get_pressed()[0]:  # [0] Jeśli lewy przycisk myszki jest kliknięty
+                        if pygame.Rect(200, 600, 200, 100).collidepoint(pygame.mouse.get_pos()):
                             pos = pygame.mouse.get_pos()
                             print(pos[0] // 200, pos[1] // 200)
                             czy_wyjsc = False
                             break
+                        #if pygame.mouse.get_pressed()[0]:  # [0] Jeśli lewy przycisk myszki jest kliknięty
+                        #    pos = pygame.mouse.get_pos()
+                        #    print(pos[0] // 200, pos[1] // 200)
+                        #    czy_wyjsc = False
+                        #    break
                 surface.fill((20, 189, 172))
 
                 grid.draw(surface)
@@ -302,12 +330,9 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                             print('You Win')
                                             plansza_own_move = msg[7:]
                                             grid = dekoduj_wygląd(plansza_own_move, grid)
-                                            textSurface = font.render('You Win', True, (0, 0, 0))
-                                            largeText = pygame.font.Font('freesansbold.ttf', 115)
-                                            TextSurf = pygame.font.render('You Win', True, (0, 0, 0))
-                                            TextRect = textSurface.get_rect()
-                                            TextRect.center = ((600 / 2), (700 // 2))
-                                            surface.blit(TextSurf, TextRect)
+
+                                            You_Win()
+
                                             grid.draw(surface)
 
                                             pygame.display.flip()
@@ -317,6 +342,8 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                             plansza_own_move = msg[8:]
                                             grid = dekoduj_wygląd(plansza_own_move, grid)
 
+                                            You_Lose()
+
                                             grid.draw(surface)
 
                                             pygame.display.flip()
@@ -325,6 +352,9 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                             print('DRAW')
                                             plansza_own_move = msg[30:]
                                             grid = dekoduj_wygląd(plansza_own_move, grid)
+
+                                            Draw()
+
                                             grid.draw(surface)
 
                                             pygame.display.flip()
