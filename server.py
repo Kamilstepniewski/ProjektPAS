@@ -157,9 +157,9 @@ def czy_koniec(numer_gry):
         if plansza[0][i] == plansza[1][i] and plansza[2][i] == plansza[1][i] and plansza[2][i] != 0:
             return plansza[0][i]
     if plansza[0][0] == plansza[1][1] and plansza[1][1] == plansza[2][2] and plansza[1][1] != 0:
-        return plansza[0][0]
+        return plansza[1][1]
     if plansza[0][2] == plansza[1][1] and plansza[1][1] == plansza[2][0] and plansza[1][1] != 0:
-        return plansza[0][0]
+        return plansza[1][1]
     czy_koniec_1 = True
     for i in range(3):
         for j in range(3):
