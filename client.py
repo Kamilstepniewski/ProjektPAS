@@ -169,12 +169,25 @@ def message_display(text):
 
     time.sleep(2)
 
+def message_display_2(text):
+    largeText = pygame.font.Font('freesansbold.ttf',115)
+    TextSurf, TextRect = text_objects(text, largeText)
+    TextRect.center = ((600/2),(700/2))
+    surface.blit(TextSurf, TextRect)
+
+    pygame.display.update()
+
+    time.sleep(1)
+
 def You_Win():
     message_display('You Win')
 def You_Lose():
     message_display('You Lose')
 def Draw():
     message_display('Draw')
+
+def Podaj_ruch():
+    message_display_2('Your move')
 
 grid = Grid()
 running = True
@@ -213,12 +226,17 @@ with socket.create_connection((SERVER, PORT)) as sock:
                         #    break
                 surface.fill((20, 189, 172))
 
+                grid = dekoduj_wygląd(" " * 9, grid)
+
                 grid.draw(surface)
 
                 pygame.display.flip()
 
             if (pos[0] // 200 == 1, pos[1] // 200 == 3):
                 command = "start"
+
+
+                print("Wchodze w start")
                 if command == "start":
                     login = np.random.randint(100, 999)
                     msg_start = f'To:SER\r\nLogin:{login}\r\nContent-length:5\r\nMessage:START\r\n\r\n'
@@ -228,6 +246,9 @@ with socket.create_connection((SERVER, PORT)) as sock:
                     #resp = client.recv(1000)
                     #resp = resp.decode()
                     resp = nasluchuj_serwer(client)
+
+
+
                     #print("test -1 ")
                     #print(resp)
 
@@ -255,9 +276,12 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                 if resp != "code:401 Timeout":# zmieńmy to może na to że jak nie dostaniejsz odpowiedzi w ciągu x sekund to masz timeout
                                     #print('check 1')
                                     #print(resp)
-                                    msg = odpakuj(resp)
-                                    To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
 
+                                    #print('Blad', resp)
+                                    msg = odpakuj(resp)
+
+                                    To, From, Information_about_client_sesion_id, Message_id, Content_length, msg = msg
+                                    print("Ruch")
                                     if To == str(login) and session_id == str(Information_about_client_sesion_id): # nie wiem czy chcemy sprawdzać swoje session_id
                                         #print(msg[0:14])
                                         #print('Cale msg',msg)
@@ -271,6 +295,13 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                             #dekoduj_wygląd(msg[10:])
                                             #command = str(input("Podaj ruch:"))
                                             print('tutaj')
+                                            grid = dekoduj_wygląd(plansza, grid)
+                                            Podaj_ruch()
+                                            grid.draw(surface)
+
+                                            pygame.display.flip()
+
+
                                             czy_wyjsc = True
                                             while czy_wyjsc:
                                                 for event in pygame.event.get():
@@ -286,8 +317,11 @@ with socket.create_connection((SERVER, PORT)) as sock:
                                                             break
                                                 surface.fill((20, 189, 172))
                                                 grid = dekoduj_wygląd(plansza,grid)
-                                                #grid.set_cell_value(pos[0] // 200, pos[1] // 200)
+
+
                                                 grid.draw(surface)
+
+
 
                                                 pygame.display.flip()
 
